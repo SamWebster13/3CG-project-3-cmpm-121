@@ -65,6 +65,11 @@ Board.__index = Board
 
 function Board:new()
     local self = setmetatable({}, Board)
+    
+    self.scores = {}
+    for i = 1, 3 do
+        self.scores[i] = { p1 = 0, p2 = 0 }  -- Player 1 (green), Player 2 (red)
+    end
 
     -- Constants
     self.cardWidth = 60
