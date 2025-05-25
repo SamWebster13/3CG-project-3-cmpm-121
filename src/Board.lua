@@ -59,6 +59,25 @@ function SlotRow:getCards()
 end
 
 
+function SlotRow:getSlotAt(x, y)
+    for i = 1, self.slotCount do
+        local slotX = self.x + (i - 1) * (self.cardWidth + 20)
+        local slotY = self.y
+        local w = self.cardWidth
+        local h = self.cardHeight
+
+        if x >= slotX and x <= slotX + w and y >= slotY and y <= slotY + h then
+            local hasCard = self.cards[i] ~= nil
+            return {
+                index = i,
+                valid = not hasCard,
+                hasCard = hasCard
+            }
+        end
+    end
+    return nil  -- Not over any slot
+end
+
 -- Board.lua -------------------------------------------------------------------------------------------------------
 local Board = {}
 Board.__index = Board

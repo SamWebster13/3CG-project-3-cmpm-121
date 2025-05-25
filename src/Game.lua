@@ -113,14 +113,30 @@ function Game:mousereleased(x, y, button)
 
     local placed = false
 
-    -- Check for legal drop zones (bottom rows only)
+    -- Try placing the held card into a valid slot
     for _, loc in ipairs(self.board.locations) do
         local row = loc.bottom:getCards()
         for i = 1, #row do
-            local sx = loc.bottom.x + (i - 1) * (self.heldCard.width + 5)
-            local sy = loc.bottom.y
-            if not row[i] and x >= sx and x <= sx + self.heldCard.width and y >= sy and y <= sy + self.heldCard.height then
-                placed = loc.bottom:placeCard(self.heldCard, i)
+            local slotX = loc.bottom.x + (i - 1) * (self.heldCard.width + 5)
+            local slotY = loc.bottom.y
+
+            local insideSlot = x >= slotX and x <= slotX + self.heldCard.width
+                            and y >= slotY and y <= slotY + self.heldCard.height
+
+            if insideSlot and not row[i] and self:isValidPlay(self.heldCard, loc.bottom, i) then
+                -- Snap card to slot
+                self.heldCard.x = slotX
+                self.heldCard.y = slotY
+
+                -- Place it into the slot data structure
+                loc.bottom:placeCard(self.heldCard, i)
+
+                -- Subtract mana
+                if self.heldCard.manaCost then
+                    self.mana = self.mana - self.heldCard.manaCost
+                end
+
+                placed = true
                 break
             end
         end
@@ -133,6 +149,29 @@ function Game:mousereleased(x, y, button)
     end
 
     self.heldCard = nil
+end
+
+
+function Game:isValidPlay(card, slotRow, index)
+    -- Rule: must have enough mana
+    if card.manaCost and card.manaCost > self.mana then
+        return false
+    end
+
+    -- Rule: only certain types of cards allowed (example: only "creature" cards in bottom rows)
+    if card.type and card.type ~= "creature" then
+        return false
+    end
+
+    -- Rule: prevent duplicate card names in the same row
+    local rowCards = slotRow:getCards()
+    for _, c in ipairs(rowCards) do
+        if c and c.name == card.name then
+            return false
+        end
+    end
+
+    return true
 end
 
 return setmetatable({}, { __call = function(_, ...) return Game:new(...) end })
