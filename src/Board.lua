@@ -22,35 +22,50 @@ function SlotRow:draw(highlightIndex)
         local y = self.y
 
         if highlightIndex == i then
-            love.graphics.setColor(0.4, 0.4, 0.6) -- darker shade
+            love.graphics.setColor(0.4, 0.4, 0.6)
             love.graphics.rectangle("fill", x, y, self.cardWidth, self.cardHeight)
         end
 
         love.graphics.setColor(1, 1, 1)
         love.graphics.rectangle("line", x, y, self.cardWidth, self.cardHeight)
 
-        local card = self.cards[i]
-        if card then
-            card.x = x
-            card.y = y
-            card:draw()
+        local pile = self.cards[i]
+        if pile and #pile > 0 then
+            local topCard = pile[#pile]
+            if topCard then
+                topCard.x = x
+                topCard.y = y
+                topCard:draw()
+            end
         end
     end
 end
 
+
 function SlotRow:placeCard(card, slotIndex)
-    if self.cards[slotIndex] == nil then
-        self.cards[slotIndex] = card
-        card.x = self.x + (slotIndex - 1) * (self.cardWidth + 5)
-        card.y = self.y
+    local pile = self.cards[slotIndex]
+    if not pile then return false end
+
+    local topCard = pile[#pile]
+
+    -- If pile is empty, only allow an Ace (assuming rank 1 = Ace)
+    if #pile == 0 and card.rank == 1 then
+        table.insert(pile, card)
+        return true
+
+    -- Otherwise, must match suit and be one higher
+    elseif topCard and card.suit == topCard.suit and card.rank == topCard.rank + 1 then
+        table.insert(pile, card)
         return true
     end
+
     return false
 end
 
 function SlotRow:clear()
     for i = 1, self.slotCount do
-        self.cards[i] = nil
+        self.cards[i] = {}
+
     end
 end
 
@@ -76,6 +91,14 @@ function SlotRow:getSlotAt(x, y)
         end
     end
     return nil  -- Not over any slot
+end
+
+function SlotRow:getTopCard(index)
+    local pile = self.cards[index]
+    if #pile > 0 then
+        return pile[#pile]
+    end
+    return nil
 end
 
 -- Board.lua -------------------------------------------------------------------------------------------------------
