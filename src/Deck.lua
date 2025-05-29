@@ -1,30 +1,73 @@
--- src/Deck.lua
-local Card = require("src.Card")
-
 local Deck = {}
 Deck.__index = Deck
 
-setmetatable(Deck, {
-    __call = function(cls, ...)
-        return cls.new(...)
+local Card = require("src.Card")
+
+local function loadCSV(filename)
+    local cards = {}
+    local fileContent = love.filesystem.read(filename)
+    if not fileContent then return cards end
+
+    local lines = {}
+    for line in string.gmatch(fileContent, "[^\r\n]+") do
+        table.insert(lines, line)
     end
-})
 
--- Filler deck constructor
-function Deck.new(startX, startY)
-    local self = setmetatable({cards = {}}, Deck)
+    local headers = {}  -- Parse CSV header
+    for header in string.gmatch(lines[1], '([^,]+)') do
+        table.insert(headers, header)
+    end
 
-    local colors = {
-        {1, 0, 0}, {0, 1, 0}, {0, 0, 1},
-        {1, 1, 0}, {1, 0, 1}, {0, 1, 1},
-        {0.5, 0.5, 0.5}, {1, 0.5, 0}, {0.5, 0, 1}, {0, 0, 0}
-    }
+    for i = 2, #lines do
+        local values = {}
+        for value in string.gmatch(lines[i], '([^,]+)') do
+            table.insert(values, value)
+        end
 
-    for i = 1, 10 do
-        local card = Card:new(i, math.random(1, 5), math.random(1, 8))
-        card.x = startX or 0
-        card.y = startY or 0
-        table.insert(self.cards, card)
+        local cardData = {
+            name  = values[1],
+            cost  = tonumber(values[2]),
+            power = tonumber(values[3]),
+            text  = values[4] or ""
+        }
+
+        table.insert(cards, Card.new(cardData))
+    end
+
+    return cards
+end
+
+function Deck.new(csvPath, x, y)
+    local self = setmetatable({}, Deck)
+    self.cards = {}
+    self.x = x or 50
+    self.y = y or 300
+    self.width = 60
+    self.height = 90
+
+    -- Load cards from CSV
+    local file = love.filesystem.read(csvPath)
+    if file then
+        local firstLine = true
+        for line in string.gmatch(file, "[^\r\n]+") do
+            if firstLine then
+                firstLine = false
+            else
+                local fields = {}
+                for value in string.gmatch(line, '([^,]+)') do
+                    table.insert(fields, value)
+                end
+
+                local data = {
+                    name = fields[1] or "Unknown",
+                    cost = tonumber(fields[2]) or 1,
+                    power = tonumber(fields[3]) or 1,
+                    text = fields[4] or "No effect"
+                }
+
+                table.insert(self.cards, require("src.Card").new(data))
+            end
+        end
     end
 
     return self
@@ -33,18 +76,13 @@ end
 
 function Deck:shuffle()
     for i = #self.cards, 2, -1 do
-        local j = math.random(1, i)
+        local j = math.random(i)
         self.cards[i], self.cards[j] = self.cards[j], self.cards[i]
     end
 end
 
-function Deck:drawAll()
-    for _, card in ipairs(self.cards) do
-        card:draw()
-    end
-end
-
 function Deck:drawTopCard()
+    if #self.cards == 0 then return nil end
     return table.remove(self.cards)
 end
 
