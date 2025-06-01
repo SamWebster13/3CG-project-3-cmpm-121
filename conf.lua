@@ -1,4 +1,3 @@
--- conf.lua
 function love.conf(t)
     t.window.title = "3CG - Mythic Clash"
     t.window.width = 1280     -- Increase this for a wider board
