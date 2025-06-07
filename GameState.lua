@@ -342,39 +342,39 @@ end
 
 function GameState:resolveCombat()
     for _, zone in ipairs(self.board.zones) do
-        local playerPower = 0
-        local aiPower = 0
-
-        -- Tally total power in this zone
+        -- Trigger onReveal abilities before calculating power
         for i = 1, 4 do
             local pCard = zone.playerSlots[i].card
             local aCard = zone.aiSlots[i].card
 
+            if pCard and pCard.onReveal then
+                print("Triggering onReveal for player card: " .. pCard.name)
+                pCard.onReveal(self, "player")
+            end
+            if aCard and aCard.onReveal then
+                aCard.onReveal(self, "ai")
+            end
+        end
+
+        -- Then do regular power comparison
+        local playerPower, aiPower = 0, 0
+        for i = 1, 4 do
+            local pCard = zone.playerSlots[i].card
+            local aCard = zone.aiSlots[i].card
             if pCard then playerPower = playerPower + pCard.power end
             if aCard then aiPower = aiPower + aCard.power end
         end
 
-        -- Award points based on difference
         if playerPower > aiPower then
             self.playerPoints = self.playerPoints + (playerPower - aiPower)
         elseif aiPower > playerPower then
             self.aiPoints = self.aiPoints + (aiPower - playerPower)
         end
-        -- if equal, no one gets points
     end
 
-    -- Check for winner
-    if self.playerPoints >= WINNING_POINTS or self.aiPoints >= WINNING_POINTS then
-        if self.playerPoints > self.aiPoints then
-            self.winner = "Player"
-        elseif self.aiPoints > self.playerPoints then
-            self.winner = "AI"
-        else
-            self.winner = "Tie"
-        end
-        self.phase = "gameover"
-    end
+    self:checkWinCondition()
 end
+
 
 
 function GameState:nextRound()
