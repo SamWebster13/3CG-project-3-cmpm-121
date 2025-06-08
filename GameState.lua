@@ -123,6 +123,34 @@ end
 function GameState:update(dt)
 end
 
+function GameState:drawManaBar(x, y, width, height)
+    -- Background bar (dark blue)
+    love.graphics.setColor(0.1, 0.1, 0.5)
+    love.graphics.rectangle("fill", x, y, width, height)
+
+    -- Filled mana (light blue)
+    local manaRatio = (self.mana - self.playerManaUsed) / self.mana
+    local filledWidth = math.max(0, width * manaRatio)
+
+    love.graphics.setColor(0.4, 0.6, 1.0)
+    love.graphics.rectangle("fill", x, y, filledWidth, height)
+
+    -- Hovered card cost bar (red), drawn from right to left
+    if self.hoveredCard then
+        local cardCost = self.hoveredCard.cost or 0
+        local costRatio = math.min(cardCost / self.mana, 1)
+        local redBarWidth = width * costRatio
+        local redBarStartX = x + filledWidth - redBarWidth
+
+        love.graphics.setColor(1.0, 0.2, 0.2, 0.7)
+        love.graphics.rectangle("fill", redBarStartX, y, redBarWidth, height)
+    end
+
+    -- Reset color
+    love.graphics.setColor(1, 1, 1)
+end
+
+
 function GameState:draw()
     self.board:draw()
     for _, card in ipairs(self.playerHand) do
@@ -180,7 +208,7 @@ function GameState:draw()
     love.graphics.print("AI Points: " .. self.aiPoints, 20, 70)
     
     -- Draw Player mana info
-    love.graphics.print("Player Mana: " .. self.mana, 150, 550)
+    love.graphics.print("Player Mana: " .. (self.mana - self.playerManaUsed) .. "/" .. self.mana, 150, 550)
     love.graphics.print("Player Mana Used: " .. self.playerManaUsed, 150, 575)
 
     -- Draw AI mana info
@@ -189,6 +217,10 @@ function GameState:draw()
 
     -- Draw AI cards count (hand size)
     love.graphics.print("AI Cards in Hand: " .. #self.aiHand, 20, 90)
+    
+    -- Draw mana bar at bottom center
+    self:drawManaBar(150, 575, 540, 20)
+
     
     
     if self.phase == "gameover" then
