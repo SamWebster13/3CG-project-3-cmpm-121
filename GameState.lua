@@ -153,12 +153,26 @@ end
 
 function GameState:draw()
     self.board:draw()
+    self:drawManaBar(150, 575, 540, 20)
     for _, card in ipairs(self.playerHand) do
         card:draw()
     end
     for _, card in ipairs(self.aiHand) do
-        card:draw()
+        if self.phase ~= "gameover" then
+            -- Draw hidden AI hand cards
+            love.graphics.setColor(0.6, 0.6, 0.6)
+            love.graphics.rectangle("fill", card.x, card.y, card.width or 60, card.height or 90)
+            love.graphics.setColor(1, 1, 1)
+            love.graphics.printf("???", card.x, card.y + 35, card.width or 55, "center")
+        else
+            -- Reveal AI hand cards after game ends
+            card:draw()
+        end
     end
+
+    
+    
+
     
     for _, zone in ipairs(self.board.zones) do
         for i = 1, 4 do
@@ -199,27 +213,27 @@ function GameState:draw()
         love.graphics.setColor(0, 0, 0)
         love.graphics.printf("Continue", self.continueButton.x, self.continueButton.y + 12, self.continueButton.w, "center")
     end
+    
 
     -- Draw points and info
     love.graphics.setColor(1, 1, 1)
     love.graphics.print("" .. #self.playerDeck, 65, 565)
-    love.graphics.print("Hand: " .. #self.playerHand .. "/" .. HAND_LIMIT, 20, 30)
+    
     love.graphics.print("Player Points: " .. self.playerPoints, 20, 50)
     love.graphics.print("AI Points: " .. self.aiPoints, 20, 70)
     
     -- Draw Player mana info
     love.graphics.print("Player Mana: " .. (self.mana - self.playerManaUsed) .. "/" .. self.mana, 150, 550)
-    love.graphics.print("Player Mana Used: " .. self.playerManaUsed, 150, 575)
 
     -- Draw AI mana info
     love.graphics.print("AI Mana: " .. self.mana, 150, 125)
     love.graphics.print("AI Mana Used: " .. self.aiManaUsed, 150, 150)
 
     -- Draw AI cards count (hand size)
-    love.graphics.print("AI Cards in Hand: " .. #self.aiHand, 20, 90)
+    
     
     -- Draw mana bar at bottom center
-    self:drawManaBar(150, 575, 540, 20)
+    
 
     
     
@@ -321,6 +335,7 @@ function GameState:mousereleased(x, y, button)
             -- Valid move
             slot.card = self.draggingCard
             self.playerManaUsed = self.playerManaUsed + self.draggingCard.cost
+            self.hoveredCard = nil
 
             for i, c in ipairs(self.playerHand) do
                 if c == self.draggingCard then
@@ -336,6 +351,7 @@ function GameState:mousereleased(x, y, button)
             self:aiTurn()
         else
             -- Not enough mana, reject the move and reset card position
+            self.hoveredCard = nil
             self.draggingCard.x = nil
             self.draggingCard.y = nil
             self:layoutHand(self.playerHand)

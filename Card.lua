@@ -25,6 +25,7 @@ function Card.new(name, cost, power, description, x, y)
     -- Medusa 
     -- Cyclops
     -- Hera
+    -- 
     self.onReveal = nil    
     if name == "Zeus" then -- ZEUS --------------------------------------------
         self.onReveal = function(gameState, owner)
@@ -227,6 +228,91 @@ function Card.new(name, cost, power, description, x, y)
             end
             print("Hera buffed " .. buffed .. " cards in hand.")
         end
+    elseif name == "Hercules" then -- HERCULES -----------------------------------------
+        self.onReveal = function(gameState, owner)
+            local zones = gameState.board.zones
+            local isPlayer = (owner == "player")
+            for _, zone in ipairs(zones) do
+                local slots = isPlayer and zone.playerSlots or zone.aiSlots
+                for _, slot in ipairs(slots) do
+                    if slot.card == self then
+                        -- Check if strongest in this zone
+                        local strongest = true
+                        for _, s in ipairs(slots) do
+                            if s.card and s.card ~= self and s.card.power > self.power then
+                                strongest = false
+                                break
+                            end
+                        end
+                        if strongest then
+                            print("Hercules doubles power from " .. self.power .. " to " .. (self.power * 2))
+                            self.power = self.power * 2
+                        end
+                        return
+                    end
+                end
+            end
+        end
+
+    elseif name == "Hydra" then -- HYDRA ----------------------------------------------
+        self.onReveal = function(gameState, owner)
+            local hand = (owner == "player") and gameState.playerHand or gameState.aiHand
+            local added = 0
+            for i = 1, 2 do
+                if #hand < 7 then
+                    local clone = Card.new("Hydra", self.cost, self.power, self.description)
+                    table.insert(hand, clone)
+                    print("Hydra grows another head — Hydra copy added to hand.")
+                    added = added + 1
+                else
+                    print("Hydra tried to grow, but there's no room in hand.")
+                    break
+                end
+            end
+            if added > 0 then
+                print("Hydra added " .. added .. " new card(s) to hand.")
+            end
+        end
+    elseif name == "Ship of Theseus" then -- SHIP OF THESEUS --------------------------
+        self.onReveal = function(gameState, owner)
+            local hand = (owner == "player") and gameState.playerHand or gameState.aiHand
+            local clone = Card.new("Ship of Theseus", self.cost, self.power + 1, self.description)
+            table.insert(hand, clone)
+            print("Ship of Theseus duplicates with +1 power: now " .. clone.power)
+        end
+
+    elseif name == "Athena" then -- ATHENA --------------------------------------------
+        self.onReveal = function(gameState, owner)
+            local zones = gameState.board.zones
+            local isPlayer = (owner == "player")
+            for _, zone in ipairs(zones) do
+                local slots = isPlayer and zone.playerSlots or zone.aiSlots
+                for _, slot in ipairs(slots) do
+                    if slot.card == self then
+                        zone.athenaEffect = function(playedCard)
+                            if playedCard ~= self then
+                                print("Athena inspires " .. playedCard.name)
+                                playedCard.power = playedCard.power + 1
+                            end
+                        end
+                        print("Athena's passive effect activated in this zone.")
+                        return
+                    end
+                end
+            end
+        end
+
+    elseif name == "Apollo" then -- APOLLO --------------------------------------------
+        self.onReveal = function(gameState, owner)
+            if owner == "player" then
+                gameState.pendingPlayerMana = (gameState.pendingPlayerMana or 0) + 1
+                print("Apollo blesses the player with +1 mana next turn")
+            else
+                gameState.pendingAiMana = (gameState.pendingAiMana or 0) + 1
+                print("Apollo blesses the AI with +1 mana next turn")
+            end
+        end
+
     end -- ← MISSING `end` was added here
 
     return self
