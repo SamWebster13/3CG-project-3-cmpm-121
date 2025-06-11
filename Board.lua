@@ -74,6 +74,18 @@ function Board:createHandSlots(startX, y)
     end
     return hand
 end
+--------------------------------------------------------------------------------
+-- FUNCTION: findFirstEmptyHandSlot
+-- Getter function to find empty slots
+--------------------------------------------------------------------------------
+function findFirstEmptyHandSlot(handSlots)
+    for _, slot in ipairs(handSlots) do
+        if not slot.card then
+            return slot
+        end
+    end
+    return nil
+end
 
 --------------------------------------------------------------------------------
 -- FUNCTION: drawSlotArray

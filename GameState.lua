@@ -31,7 +31,9 @@ function GameState:new()
     self.drawButton = { x = 30, y = 550, w = 80, h = 40 }
     self.submitButton = { x = 35, y = 640, w = 80, h = 40 }
     self.continueButton = { x = 35, y = 640, w = 80, h = 40 }
-    self.restartButton = { x = 640, y = 310, w = 120, h = 40 }
+    self.restartButton = { x = 575, y = 350, w = 120, h = 40 }
+    --self.winButton = { x = 180, y = 640, w = 80, h = 40 }
+    self.drawBack = {x = 575, y = 350, w = 120, h = 40}
 
 
     self:loadDecks()
@@ -170,8 +172,13 @@ function GameState:draw()
         end
     end
 
+    -- TEMP: Draw "Win" test button
+    -- love.graphics.setColor(0.4, 1.0, 0.4)
+    -- love.graphics.rectangle("fill", self.winButton.x, self.winButton.y, self.winButton.w, self.winButton.h)
+    -- love.graphics.setColor(0, 0, 0)
+    -- love.graphics.printf("Win", self.winButton.x, self.winButton.y + 12, self.winButton.w, "center")
     
-    
+
 
     
     for _, zone in ipairs(self.board.zones) do
@@ -207,6 +214,8 @@ function GameState:draw()
         love.graphics.rectangle("fill", self.submitButton.x, self.submitButton.y, self.submitButton.w, self.submitButton.h)
         love.graphics.setColor(0, 0, 0)
         love.graphics.printf("Submit", self.submitButton.x, self.submitButton.y + 12, self.submitButton.w, "center")
+        
+        
     elseif self.phase == "reveal" then
         love.graphics.setColor(0.9, 0.4, 0.4)
         love.graphics.rectangle("fill", self.continueButton.x, self.continueButton.y, self.continueButton.w, self.continueButton.h)
@@ -229,30 +238,53 @@ function GameState:draw()
     love.graphics.print("AI Mana: " .. self.mana, 150, 125)
     love.graphics.print("AI Mana Used: " .. self.aiManaUsed, 150, 150)
 
-    -- Draw AI cards count (hand size)
-    
-    
-    -- Draw mana bar at bottom center
-    
+
 
     
     
     if self.phase == "gameover" then
-      love.graphics.setColor(1, 0, 0)
-      local msg = "Game Over! "
-      if self.winner == "Tie" then
-          msg = msg .. "It's a tie!"
-      else
-          msg = msg .. self.winner .. " wins!"
-      if self.phase == "gameover" then
-          love.graphics.setColor(0.2, 0.8, 0.2)
-          love.graphics.rectangle("fill", self.restartButton.x, self.restartButton.y, self.restartButton.w, self.restartButton.h)
-          love.graphics.setColor(0, 0, 0)
-          love.graphics.printf("Restart", self.restartButton.x, self.restartButton.y + 12, self.restartButton.w, "center")
-      end
+        -- Set up a large font for the Game Over message
+        local titleFont = love.graphics.newFont(36)
+        love.graphics.setFont(titleFont)
+        
+        
+        -- Draw semi-transparent backdrop behind the button
+        love.graphics.setColor(0, 0, 0, 0.5) -- semi-transparent dark grey
+        love.graphics.rectangle("fill", self.restartButton.x - 210, self.restartButton.y - 110,
+                                self.restartButton.w + 425, self.restartButton.h + 125, 10, 10)
+                              
+        -- Set color and build message
+        love.graphics.setColor(1, 0, 0)
+        local msg = "Game Over! "
+        if self.winner == "Tie" then
+            msg = msg .. "It's a tie!"
+        else
+            msg = msg .. self.winner .. " wins!"
+        end
+
+        -- Draw the message centered on screen
+        love.graphics.printf(msg, 0, 250, love.graphics.getWidth(), "center")
+
+        
+
+        -- Draw the restart button
+        love.graphics.setColor(0.7, 0.8, 0.2)
+        love.graphics.rectangle("fill", self.restartButton.x, self.restartButton.y,
+                                self.restartButton.w, self.restartButton.h, 6, 6)
+
+        -- Set a smaller font for the button text
+        local buttonFont = love.graphics.newFont(18)
+        love.graphics.setFont(buttonFont)
+
+        -- Draw the button text
+        love.graphics.setColor(0, 0, 0)
+        love.graphics.printf("Restart", self.restartButton.x, self.restartButton.y + 8,
+                             self.restartButton.w, "center")
+
+        -- Optionally reset font afterward
+        love.graphics.setFont(self.defaultFont or love.graphics.newFont(14))
     end
-    love.graphics.printf(msg, 0, 300, love.graphics.getWidth(), "center")
-end
+
 
 end
 
@@ -274,6 +306,13 @@ function GameState:mousepressed(x, y, button)
             self.phase = "reveal"
             return
         end
+        
+            --if self:inRect(x, y, self.winButton) then
+            --    self.playerPoints = WINNING_POINTS
+            --    self:checkWinCondition()
+            --    return
+            --end
+
 
         for _, card in ipairs(self.playerHand) do
             if card:contains(x, y) then

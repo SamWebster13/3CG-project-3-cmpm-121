@@ -25,7 +25,9 @@ function Card.new(name, cost, power, description, x, y)
     -- Medusa 
     -- Cyclops
     -- Hera
-    -- 
+    -- Hercules
+    -- Athena
+    -- Apollo
     self.onReveal = nil    
     if name == "Zeus" then -- ZEUS --------------------------------------------
         self.onReveal = function(gameState, owner)
@@ -151,22 +153,16 @@ function Card.new(name, cost, power, description, x, y)
             local isPlayer = (owner == "player")
 
             for _, zone in ipairs(zones) do
-                local mySlots = isPlayer and zone.playerSlots or zone.aiSlots
-                for _, slot in ipairs(mySlots) do
-                    if slot.card == self then
-                        -- Found Aphrodite's zone
-                        local enemySlots = isPlayer and zone.aiSlots or zone.playerSlots
-                        for _, eSlot in ipairs(enemySlots) do
-                            if eSlot.card then
-                                print("Aphrodite lowers " .. eSlot.card.name .. "'s power from " .. eSlot.card.power)
-                                eSlot.card.power = math.max(0, eSlot.card.power - 1)
-                            end
-                        end
-                        return
+                local slots = isPlayer and zone.aiSlots or zone.playerSlots
+                for _, slot in ipairs(slots) do
+                    local card = slot.card
+                    if card then
+                        print("Aphrodite lowers " .. card.name .. "'s power from " .. card.power)
+                        card.power = math.max(0, card.power - 1)
                     end
                 end
             end
-        end                      
+        end               
     elseif name == "Medusa" then -- MEDUSA ------------------------------------------
         -- Medusa sets a persistent effect: when any other card is played in her zone, reduce its power
         self.onReveal = function(gameState, owner)
@@ -254,32 +250,8 @@ function Card.new(name, cost, power, description, x, y)
             end
         end
 
-    elseif name == "Hydra" then -- HYDRA ----------------------------------------------
-        self.onReveal = function(gameState, owner)
-            local hand = (owner == "player") and gameState.playerHand or gameState.aiHand
-            local added = 0
-            for i = 1, 2 do
-                if #hand < 7 then
-                    local clone = Card.new("Hydra", self.cost, self.power, self.description)
-                    table.insert(hand, clone)
-                    print("Hydra grows another head — Hydra copy added to hand.")
-                    added = added + 1
-                else
-                    print("Hydra tried to grow, but there's no room in hand.")
-                    break
-                end
-            end
-            if added > 0 then
-                print("Hydra added " .. added .. " new card(s) to hand.")
-            end
-        end
-    elseif name == "Ship of Theseus" then -- SHIP OF THESEUS --------------------------
-        self.onReveal = function(gameState, owner)
-            local hand = (owner == "player") and gameState.playerHand or gameState.aiHand
-            local clone = Card.new("Ship of Theseus", self.cost, self.power + 1, self.description)
-            table.insert(hand, clone)
-            print("Ship of Theseus duplicates with +1 power: now " .. clone.power)
-        end
+    
+
 
     elseif name == "Athena" then -- ATHENA --------------------------------------------
         self.onReveal = function(gameState, owner)
